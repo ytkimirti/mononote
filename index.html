@@ -64,7 +64,6 @@
       return hexCodes.join("");
     }
 
-    // SHA-256 hash
     function hash(str) {
       const buffer = new TextEncoder("utf-8").encode(str);
       return crypto.subtle.digest("SHA-1", buffer).then((hash) => {

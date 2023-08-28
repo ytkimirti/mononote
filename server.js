@@ -10,31 +10,24 @@ if (!fs.existsSync(FOLDER)) fs.mkdirSync(FOLDER);
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "*",
 };
 
 const server = http.createServer((req, res) => {
-  if (req.method === "PUT" || req.method === "POST") {
+  if (req.method === "POST") {
     handlePutRequest(req, res);
   } else if (req.method === "GET") {
     handleGetRequest(req, res);
-  } else if (req.method === "OPTIONS") {
-    res.writeHead(200, { "Content-Type": "text/plain", ...headers });
-    res.end();
   } else {
     res.writeHead(405, { "Content-Type": "text/plain", ...headers });
     res.end("Method Not Allowed");
   }
 });
 
-function hashText(text) {
+function hash(data) {
   const hash = crypto.createHash("sha1");
-  hash.update(text);
-
+  hash.update(data);
   return hash.digest("hex");
 }
-
-console.log(hashText("rabia"));
 
 function handlePutRequest(req, res) {
   let requestBody = "";
@@ -44,10 +37,7 @@ function handlePutRequest(req, res) {
   });
 
   req.on("end", () => {
-    const hash = crypto.createHash("sha1");
-    hash.update(requestBody);
-
-    const fileHash = hash.digest("hex");
+    const fileHash = hash(requestBody);
     const pathName = path.join(FOLDER, `${fileHash}.txt`);
 
     console.log(`PUT ${pathName}`);
@@ -64,8 +54,13 @@ function handlePutRequest(req, res) {
 }
 
 function handleGetRequest(req, res) {
-  console.log(req.url);
   const hash = req.url.slice(1);
+  // Check if it is base64
+  if (!hash.match(/^[0-9a-f]+$/)) {
+    res.writeHead(400, { "Content-Type": "text/plain", ...headers });
+    res.end("Invalid Request");
+    return;
+  }
 
   const pathName = path.join(FOLDER, `${hash}.txt`);
   console.log(`GET ${pathName}`);
