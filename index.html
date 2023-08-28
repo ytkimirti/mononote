@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>mono editor</title>
-    <script src="index.js"></script>
   </head>
   <style>
     body {
@@ -51,21 +50,47 @@
     <textarea class="area" id="hidden"></textarea>
   </body>
   <script>
+    // Convert bytes to hex
+    function hex(buffer) {
+      const hexCodes = [];
+      const view = new DataView(buffer);
+      for (let i = 0; i < view.byteLength; i += 4) {
+        const value = view.getUint32(i);
+        const stringValue = value.toString(16);
+        const padding = "00000000";
+        const paddedValue = (padding + stringValue).slice(-padding.length);
+        hexCodes.push(paddedValue);
+      }
+      return hexCodes.join("");
+    }
+
+    // SHA-256 hash
+    function hash(str) {
+      const buffer = new TextEncoder("utf-8").encode(str);
+      return crypto.subtle.digest("SHA-1", buffer).then((hash) => {
+        return hex(hash);
+      });
+    }
+  </script>
+
+  <script>
     const main = document.getElementById("main");
     const hidden = document.getElementById("hidden");
 
-    hidden.innerText = `
-    Hello world
+    hidden.value = localStorage.getItem("text") || "";
+    const stateObj = {};
 
-
-        My name is yusuf
-
-    this is a link
-    https://google.com and this too https://google.com
-    `;
-
-    function format() {
+    function update() {
       let text = hidden.value;
+      localStorage.setItem("text", text);
+
+      hash(text).then((hash) => {
+        // Set hash
+        // window.location.hash = hash;
+        const url = new URL(window.location.href);
+        url.hash = hash;
+        window.history.replaceState(stateObj, "title**", url);
+      });
 
       // Turn urls into links
       const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -85,11 +110,11 @@
       if (e.key === "Tab") {
         e.preventDefault();
         document.execCommand("insertHTML", false, "&#009");
-        format();
+        update();
       }
     };
 
-    hidden.addEventListener("input", format);
-    format();
+    hidden.addEventListener("input", update);
+    update();
   </script>
 </html>
