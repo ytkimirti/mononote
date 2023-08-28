@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mono editor</title>
+    <script src="index.js"></script>
+  </head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      font-family: monospace;
+      color: #fff;
+      white-space: pre-wrap;
+    }
+
+    .area {
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      position: absolute;
+      border: none;
+      outline: none;
+      font-size: inherit;
+    }
+
+    a {
+      color: #abbbed;
+      /* text-decoration: none; */
+    }
+
+    #hidden {
+      color: #f00;
+      /* visibility: hidden; */
+      color: transparent;
+      caret-color: #fff;
+      display: block;
+      resize: none;
+      background-color: transparent;
+    }
+
+    span {
+      color: #0f0;
+    }
+  </style>
+  <body>
+    <div class="area" id="main"></div>
+    <textarea class="area" id="hidden"></textarea>
+  </body>
+  <script>
+    const main = document.getElementById("main");
+    const hidden = document.getElementById("hidden");
+
+    hidden.innerText = `
+    Hello world
+
+
+        My name is yusuf
+
+    this is a link
+    https://google.com and this too https://google.com
+    `;
+
+    function format() {
+      let text = hidden.value;
+
+      // Turn urls into links
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      text = text.replace(
+        urlRegex,
+        (url) => '<a href="' + url + '">' + url + "</a>"
+      );
+
+      // Turn > text to green
+      const quoteRegex = /^>.*$/gm;
+      text = text.replace(quoteRegex, (quote) => `<span>${quote}</span>`);
+
+      main.innerHTML = text;
+    }
+
+    hidden.onkeydown = (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        document.execCommand("insertHTML", false, "&#009");
+        format();
+      }
+    };
+
+    hidden.addEventListener("input", format);
+    format();
+  </script>
+</html>
