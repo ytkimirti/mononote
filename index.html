@@ -71,26 +71,139 @@
         return hex(hash);
       });
     }
+
+    // Function to generate a 32-byte (256-bit) key from a passphrase
+    async function generateKey(passphrase) {
+      const encoder = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(passphrase),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+      );
+
+      return await crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: new Uint8Array(0), // Empty salt because we want the same key each time
+          iterations: 100000,
+          hash: "SHA-256",
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    // Function to encrypt plaintext using AES-256 with a fixed IV
+    async function encrypt(plaintext, key) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(plaintext);
+
+      // Use a fixed IV (must be 12 bytes for AES-GCM)
+      const iv = new Uint8Array(12);
+
+      const ciphertextBuffer = await crypto.subtle.encrypt(
+        {
+          name: "AES-GCM",
+          iv: iv,
+        },
+        key,
+        data
+      );
+
+      return btoa(
+        String.fromCharCode.apply(null, new Uint8Array(ciphertextBuffer))
+      ); // Base64 encode the result
+    }
+
+    // Function to decrypt ciphertext using AES-256 with a fixed IV
+    async function decrypt(ciphertext, key) {
+      const decoder = new TextDecoder("utf-8");
+      const ciphertextArray = new Uint8Array(
+        Array.from(atob(ciphertext), (c) => c.charCodeAt(0))
+      );
+
+      // Use a fixed IV (must be 12 bytes for AES-GCM)
+      const iv = new Uint8Array(12);
+      const data = ciphertextArray;
+
+      const plaintextBuffer = await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: iv,
+        },
+        key,
+        data
+      );
+
+      return decoder.decode(plaintextBuffer);
+    }
   </script>
 
   <script>
+    const SERVER = "localhost:3000";
     const main = document.getElementById("main");
     const hidden = document.getElementById("hidden");
 
-    hidden.value = localStorage.getItem("text") || "";
     const stateObj = {};
+
+    async function getNoteFromServer(nid) {
+      const splitted = nid.split("-");
+
+      if (splitted.length != 2) return null;
+
+      const [textHash, cryptHash] = splitted;
+
+      const req = await fetch(`http://localhost:3000/${cryptHash}`);
+
+      const body = await req.text();
+
+      if (req.status < 200 || req.status >= 300) {
+        console.error(`GET returned ${req.status}: ${body}`);
+        return null;
+      }
+
+      const key = await generateKey(textHash);
+
+      return decrypt(body, key);
+    }
+
+    async function updateHashAndSave(text) {
+      const textHash = await hash(text);
+
+      const key = await generateKey(textHash);
+
+      const textCrypt = await encrypt(text, key);
+
+      const cryptHash = await hash(textCrypt);
+
+      const noteId = `${textHash}-${cryptHash}`;
+
+      const url = new URL(window.location.href);
+      url.hash = noteId;
+      window.history.replaceState(stateObj, null, url);
+
+      // Send put request
+      const req = await fetch("http://localhost:3000", {
+        method: "POST",
+        body: textCrypt,
+      });
+
+      if (req.status < 200 || req.status >= 300) {
+        const body = await req.text();
+        console.error(`PUT returned ${req.status}: ${body}`);
+        return;
+      }
+    }
 
     function update() {
       let text = hidden.value;
       localStorage.setItem("text", text);
 
-      hash(text).then((hash) => {
-        // Set hash
-        // window.location.hash = hash;
-        const url = new URL(window.location.href);
-        url.hash = hash;
-        window.history.replaceState(stateObj, "title**", url);
-      });
+      void updateHashAndSave(text);
 
       // Turn urls into links
       const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -114,7 +227,21 @@
       }
     };
 
+    hidden.value = "";
+    if (window.location.hash === "") {
+      hidden.value = localStorage.getItem("text") || "";
+      update();
+    } else {
+      getNoteFromServer(window.location.hash.slice(1))
+        .then((note) => {
+          hidden.value = note;
+          update();
+        })
+        .catch((e) => {
+          console.error(e);
+          window.location.hash = "";
+        });
+    }
     hidden.addEventListener("input", update);
-    update();
   </script>
 </html>
