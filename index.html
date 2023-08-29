@@ -163,6 +163,8 @@
     const savedHashes = new Set();
     let isSaved = false;
 
+    let currId = "";
+
     async function getNoteFromUrl() {
       const splitted = window.location.hash.slice(1).split("-");
 
@@ -194,7 +196,13 @@
 
       const cryptHash = await hash(textCrypt);
 
-      const noteId = `${textHash}-${cryptHash}`;
+      currId = `${textHash}-${cryptHash}`;
+
+      let memId = currId;
+
+      await timeout(1000);
+
+      if (memId !== currId) return;
 
       const url = new URL(window.location.href);
       url.hash = noteId;
@@ -203,13 +211,6 @@
       if (savedHashes.has(noteId)) return;
       savedHashes.add(noteId);
 
-      let currId = noteId;
-
-      await timeout(1000);
-
-      if (currId !== window.location.hash.slice(1)) return;
-
-      // Send put request
       const req = await fetch("http://localhost:3000", {
         method: "POST",
         body: textCrypt,
@@ -217,7 +218,7 @@
 
       if (req.status < 200 || req.status >= 300) {
         const body = await req.text();
-        console.error(`PUT returned ${req.status}: ${body}`);
+        console.error(`POST returned ${req.status}: ${body}`);
         return;
       }
     }
