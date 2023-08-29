@@ -34,9 +34,9 @@
     }
 
     #hidden {
-      color: #f00;
+      color: #fffa;
       /* visibility: hidden; */
-      color: transparent;
+      /* color: transparent; */
       caret-color: #fff;
       display: block;
       resize: none;
@@ -165,7 +165,7 @@
     const hidden = document.getElementById("hidden");
 
     const savedHashes = new Set();
-    let isSaved = false;
+    let isSaved = true;
 
     let currId = "";
 
@@ -212,7 +212,10 @@
       url.hash = currId;
       window.history.replaceState(null, null, url);
 
-      if (savedHashes.has(currId)) return;
+      if (savedHashes.has(currId)) {
+        isSaved = true;
+        return;
+      }
       savedHashes.add(currId);
 
       const req = await fetch("http://localhost:3000", {
@@ -229,11 +232,15 @@
       isSaved = true;
     }
 
+    let isInitial = true;
+
     function update() {
       let text = hidden.value;
       localStorage.setItem("text", text);
 
-      void updateHashAndSave(text);
+      // Skip it on the first load since it's already saved
+      if (!isInitial) void updateHashAndSave(text);
+      isInitial = false;
 
       // Turn urls into links
       const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -243,7 +250,7 @@
       );
 
       // Turn note ids to relative links
-      const noteIdRegex = /(#[a-f0-9]{20})/g;
+      const noteIdRegex = /(?<=\s|^)(#[a-f0-9]{20})(?=\s|$)/gm;
       text = text.replace(
         noteIdRegex,
         (id) => '<a class="rel" href="' + id + '">' + id + "</a>"
@@ -269,7 +276,7 @@
     };
 
     hidden.value = "";
-    if (window.location.hash === "") {
+    if (window.location.pathname === "") {
       hidden.value = localStorage.getItem("text") || "";
       update();
     } else {
