@@ -174,9 +174,7 @@
 
       if (noteid.length !== 20) return null;
 
-      const [textHash, cryptHash] = [noteid.slice(0, 10), noteid.slice(10, 20)];
-
-      debugger;
+      const [cryptHash, textHash] = [noteid.slice(0, 10), noteid.slice(10, 20)];
 
       const req = await fetch(`http://localhost:3000/${cryptHash}`);
 
@@ -202,7 +200,7 @@
 
       const cryptHash = await hash(textCrypt);
 
-      currId = `${textHash}${cryptHash}`;
+      currId = `${cryptHash}${textHash}`;
 
       let memId = currId;
 
