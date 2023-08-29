@@ -29,7 +29,7 @@ const server = http.createServer((req, res) => {
     req.on("end", () => {
       const pathName = path.join(FOLDER, `${hash(requestBody)}.txt`);
 
-      console.log(`POST ${pathName}`);
+      // console.log(`POST ${pathName}`);
       fs.writeFile(pathName, requestBody, (err) => {
         if (err) return end(500);
         end(200);
@@ -41,7 +41,7 @@ const server = http.createServer((req, res) => {
     if (!hash.match(/^[0-9a-f]+$/)) return end(404);
 
     const pathName = path.join(FOLDER, `${hash}.txt`);
-    console.log(`GET ${pathName}`);
+    // console.log(`GET ${pathName}`);
 
     fs.readFile(pathName, "utf8", (err, data) => {
       if (err) return end(404);
