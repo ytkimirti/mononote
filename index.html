@@ -169,10 +169,15 @@
 
     let currId = "";
 
+    function reset() {
+      hidden.value = "";
+      update();
+    }
+
     async function getNoteFromUrl() {
       const noteid = window.location.hash.slice(1);
 
-      if (noteid.length !== 20) return null;
+      if (noteid.length !== 20) return reset();
 
       const [cryptHash, textHash] = [noteid.slice(0, 10), noteid.slice(10, 20)];
 
@@ -182,12 +187,14 @@
 
       if (req.status < 200 || req.status >= 300) {
         console.error(`GET returned ${req.status}: ${body}`);
-        return null;
+        return reset();
       }
 
       const key = await generateKey(textHash);
 
-      return decrypt(body, key);
+      hidden.value = await decrypt(body, key);
+
+      update();
     }
 
     async function updateHashAndSave(text) {
@@ -275,16 +282,36 @@
       }
     };
 
+    onhashchange = () => {
+      console.log("asdk");
+      getNoteFromUrl();
+    };
+
+    // main.addEventListener(
+    //   "click",
+    //   (e) => {
+    //     if (
+    //       e.target instanceof HTMLAnchorElement &&
+    //       /#[a-f0-9]{20}/.test(e.target.getAttribute("href"))
+    //     ) {
+    //       e.preventDefault();
+    //       window.location.hash = e.target.getAttribute("href");
+    //       window.history.pushState(null, null, window.location.href);
+    //       getNoteFromUrl();
+    //     }
+    //   },
+    //   {
+    //     capture: true,
+    //   }
+    // );
+
     hidden.value = "";
     if (window.location.pathname === "") {
       hidden.value = localStorage.getItem("text") || "";
       update();
     } else {
       getNoteFromUrl()
-        .then((note) => {
-          hidden.value = note;
-          update();
-        })
+        .then((note) => {})
         .catch((e) => {
           console.error(e);
           window.location.hash = "";
