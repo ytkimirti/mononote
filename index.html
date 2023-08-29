@@ -54,6 +54,10 @@
     span {
       color: #0f0;
     }
+
+    .rel {
+      color: #34c4f9;
+    }
   </style>
   <body>
     <div class="area" id="main"></div>
@@ -78,7 +82,7 @@
     function hash(str) {
       const buffer = new TextEncoder("utf-8").encode(str);
       return crypto.subtle.digest("SHA-1", buffer).then((hash) => {
-        return hex(hash);
+        return hex(hash).slice(0, 10);
       });
     }
 
@@ -166,11 +170,13 @@
     let currId = "";
 
     async function getNoteFromUrl() {
-      const splitted = window.location.hash.slice(1).split("-");
+      const noteid = window.location.hash.slice(1);
 
-      if (splitted.length != 2) return null;
+      if (noteid.length !== 20) return null;
 
-      const [textHash, cryptHash] = splitted;
+      const [textHash, cryptHash] = [noteid.slice(0, 10), noteid.slice(10, 20)];
+
+      debugger;
 
       const req = await fetch(`http://localhost:3000/${cryptHash}`);
 
@@ -196,7 +202,7 @@
 
       const cryptHash = await hash(textCrypt);
 
-      currId = `${textHash}-${cryptHash}`;
+      currId = `${textHash}${cryptHash}`;
 
       let memId = currId;
 
@@ -236,6 +242,13 @@
       text = text.replace(
         urlRegex,
         (url) => '<a href="' + url + '">' + url + "</a>"
+      );
+
+      // Turn note ids to relative links
+      const noteIdRegex = /(#[a-f0-9]{20})/g;
+      text = text.replace(
+        noteIdRegex,
+        (id) => '<a class="rel" href="' + id + '">' + id + "</a>"
       );
 
       // Turn > text to green

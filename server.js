@@ -10,7 +10,7 @@ if (!fs.existsSync(FOLDER)) fs.mkdirSync(FOLDER);
 function hash(data) {
   const hash = crypto.createHash("sha1");
   hash.update(data);
-  return hash.digest("hex");
+  return hash.digest("hex").slice(0, 10);
 }
 
 const server = http.createServer((req, res) => {
