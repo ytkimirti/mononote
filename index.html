@@ -59,6 +59,7 @@
     <div class="area" id="main"></div>
     <textarea class="area" id="hidden"></textarea>
   </body>
+  <!-- ENCRYPTION -->
   <script>
     // Convert bytes to hex
     function hex(buffer) {
@@ -159,8 +160,8 @@
 
     const stateObj = {};
 
-    async function getNoteFromServer(nid) {
-      const splitted = nid.split("-");
+    async function getNoteFromUrl() {
+      const splitted = window.location.hash.slice(1).split("-");
 
       if (splitted.length != 2) return null;
 
@@ -241,7 +242,7 @@
       hidden.value = localStorage.getItem("text") || "";
       update();
     } else {
-      getNoteFromServer(window.location.hash.slice(1))
+      getNoteFromUrl()
         .then((note) => {
           hidden.value = note;
           update();
