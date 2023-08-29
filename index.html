@@ -154,11 +154,15 @@
   </script>
 
   <script>
+    const timeout = (ms) => new Promise((res) => setTimeout(res, ms));
+
     const SERVER = "localhost:3000";
     const main = document.getElementById("main");
     const hidden = document.getElementById("hidden");
 
     const stateObj = {};
+    const savedHashes = new Set();
+    let isSaved = false;
 
     async function getNoteFromUrl() {
       const splitted = window.location.hash.slice(1).split("-");
@@ -182,6 +186,7 @@
     }
 
     async function updateHashAndSave(text) {
+      isSaved = false;
       const textHash = await hash(text);
 
       const key = await generateKey(textHash);
@@ -195,6 +200,15 @@
       const url = new URL(window.location.href);
       url.hash = noteId;
       window.history.replaceState(stateObj, null, url);
+
+      if (savedHashes.has(noteId)) return;
+      savedHashes.add(noteId);
+
+      let currId = noteId;
+
+      await timeout(1000);
+
+      if (currId !== window.location.hash.slice(1)) return;
 
       // Send put request
       const req = await fetch("http://localhost:3000", {
