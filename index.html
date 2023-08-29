@@ -160,7 +160,6 @@
     const main = document.getElementById("main");
     const hidden = document.getElementById("hidden");
 
-    const stateObj = {};
     const savedHashes = new Set();
     let isSaved = false;
 
@@ -199,7 +198,7 @@
 
       const url = new URL(window.location.href);
       url.hash = noteId;
-      window.history.replaceState(stateObj, null, url);
+      window.history.replaceState(null, null, url);
 
       if (savedHashes.has(noteId)) return;
       savedHashes.add(noteId);
