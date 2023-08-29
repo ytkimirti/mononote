@@ -205,11 +205,11 @@
       if (memId !== currId) return;
 
       const url = new URL(window.location.href);
-      url.hash = noteId;
+      url.hash = currId;
       window.history.replaceState(null, null, url);
 
-      if (savedHashes.has(noteId)) return;
-      savedHashes.add(noteId);
+      if (savedHashes.has(currId)) return;
+      savedHashes.add(currId);
 
       const req = await fetch("http://localhost:3000", {
         method: "POST",
@@ -221,6 +221,8 @@
         console.error(`POST returned ${req.status}: ${body}`);
         return;
       }
+
+      isSaved = true;
     }
 
     function update() {
@@ -242,6 +244,10 @@
 
       main.innerHTML = text;
     }
+
+    window.onbeforeunload = () => {
+      if (!isSaved) return "You have unsaved changes!";
+    };
 
     hidden.onkeydown = (e) => {
       if (e.key === "Tab") {
