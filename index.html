@@ -161,11 +161,6 @@
     const main = document.getElementById("main");
     const hidden = document.getElementById("hidden");
 
-    function reset() {
-      hidden.value = "";
-      update();
-    }
-
     async function calculateNoteId(text) {
       const textHash = await hash(text);
 
@@ -179,29 +174,8 @@
     }
 
     function getNoteId() {
-      if (window.location.hash.length !== 1 + 20) return null;
+      if (!/#[0-9a-f]{20}/.test(window.location.hash)) return null;
       return window.location.hash.slice(1);
-    }
-
-    async function loadNote(noteId) {
-      if ((await calculateNoteId()) === noteId) return;
-
-      const [cryptHash, textHash] = [noteId.slice(0, 10), noteId.slice(10, 20)];
-
-      const req = await fetch(`${SERVER}/${cryptHash}`);
-
-      const body = await req.text();
-
-      if (req.status < 200 || req.status >= 300) {
-        console.error(`GET returned ${req.status}: ${body}`);
-        return reset();
-      }
-
-      const key = await generateKey(textHash);
-
-      hidden.value = await decrypt(body, key);
-
-      update();
     }
 
     const savedIds = new Set();
@@ -209,7 +183,7 @@
     async function saveNote() {
       isSaved = false;
 
-      let memId = await calculateNoteId(hidden.value);
+      const memId = await calculateNoteId(hidden.value);
 
       if (savedIds.has(memId)) {
         const url = new URL(window.location.href);
@@ -219,10 +193,24 @@
         return;
       }
 
-      await timeout(1000);
+      await timeout(500);
 
-      let currId = await calculateNoteId(hidden.value);
+      const text = hidden.value;
+      let currId = await calculateNoteId(text);
 
+      if (memId !== currId) return;
+
+      const req = await fetch(SERVER + "/", {
+        method: "POST",
+        body: await encrypt(text, await generateKey(await hash(text))),
+      });
+
+      if (req.status < 200 || req.status >= 300)
+        return console.error(
+          `POST returned ${req.status}: ${await req.text()}`
+        );
+
+      currId = await calculateNoteId(hidden.value);
       if (memId !== currId) return;
 
       const url = new URL(window.location.href);
@@ -230,24 +218,40 @@
       window.history.replaceState(null, null, url);
 
       savedIds.add(currId);
-
-      const req = await fetch(SERVER + "/", {
-        method: "POST",
-        body: textCrypt,
-      });
-
-      if (req.status < 200 || req.status >= 300) {
-        const body = await req.text();
-        console.error(`POST returned ${req.status}: ${body}`);
-        return;
-      }
-
       isSaved = true;
     }
 
     window.onbeforeunload = () => {
       if (!isSaved) return "You have unsaved changes!";
     };
+
+    async function loadNote(noteId) {
+     if (!noteId) {
+        hidden.value = "";
+        update();
+        return;
+      }
+      if ((await calculateNoteId()) === noteId) return;
+
+      const [cryptHash, textHash] = [noteId.slice(0, 10), noteId.slice(10, 20)];
+
+      const req = await fetch(`${SERVER}/${cryptHash}`);
+
+      const body = await req.text();
+
+      if (req.status < 200 || req.status >= 300) {
+        hidden.value = "404";
+        update();
+        return;
+      }
+
+      const key = await generateKey(textHash);
+
+      hidden.value = await decrypt(body, key);
+      savedIds.add(noteId);
+
+      update();
+    }
 
     function update() {
       let text = hidden.value;
@@ -312,7 +316,7 @@
     // );
 
     hidden.value = "";
-    if (!getNoteId()) {
+    if (window.location.hash === "") {
       hidden.value = localStorage.getItem("text") || "";
       update();
     } else {
