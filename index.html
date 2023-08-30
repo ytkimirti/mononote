@@ -313,24 +313,6 @@
       loadNote(getNoteId());
     };
 
-    // main.addEventListener(
-    //   "click",
-    //   (e) => {
-    //     if (
-    //       e.target instanceof HTMLAnchorElement &&
-    //       /#[a-f0-9]{20}/.test(e.target.getAttribute("href"))
-    //     ) {
-    //       e.preventDefault();
-    //       window.location.hash = e.target.getAttribute("href");
-    //       window.history.pushState(null, null, window.location.href);
-    //       getNoteFromUrl();
-    //     }
-    //   },
-    //   {
-    //     capture: true,
-    //   }
-    // );
-
     hidden.value = "";
     if (window.location.hash === "") {
       hidden.value = localStorage.getItem("text") || "";
