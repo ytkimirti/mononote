@@ -30,15 +30,12 @@
 
     a {
       color: #abbbed;
-      /* text-decoration: none; */
     }
 
     #hidden {
-      color: #fffa;
-      /* visibility: hidden; */
+      color: #f00;
       /* color: transparent; */
       caret-color: #fff;
-      display: block;
       resize: none;
       background-color: transparent;
     }
@@ -51,8 +48,8 @@
       pointer-events: all;
     }
 
-    span {
-      color: #0f0;
+    .grn {
+      color: #8cff40;
     }
 
     .rel {
@@ -275,7 +272,10 @@
 
       // Turn > text to green
       const quoteRegex = /^>.*$/gm;
-      text = text.replace(quoteRegex, (quote) => `<span>${quote}</span>`);
+      text = text.replace(
+        quoteRegex,
+        (quote) => `<span class="grn">${quote}</span>`
+      );
 
       main.innerHTML = text;
     }
