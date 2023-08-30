@@ -160,26 +160,36 @@
   <script>
     const timeout = (ms) => new Promise((res) => setTimeout(res, ms));
 
-    const SERVER = "localhost:3000";
+    const SERVER = "http://localhost:3000";
     const main = document.getElementById("main");
     const hidden = document.getElementById("hidden");
-
-    const savedHashes = new Set();
-    let isSaved = true;
-
-    let currId = "";
 
     function reset() {
       hidden.value = "";
       update();
     }
 
-    async function getNoteFromUrl() {
-      const noteid = window.location.hash.slice(1);
+    async function calculateNoteId(text) {
+      const textHash = await hash(text);
 
-      if (noteid.length !== 20) return reset();
+      const key = await generateKey(textHash);
 
-      const [cryptHash, textHash] = [noteid.slice(0, 10), noteid.slice(10, 20)];
+      const textCrypt = await encrypt(text, key);
+
+      const cryptHash = await hash(textCrypt);
+
+      return cryptHash + textHash;
+    }
+
+    function getNoteId() {
+      if (window.location.hash.length !== 1 + 20) return null;
+      return window.location.hash.slice(1);
+    }
+
+    async function loadNote(noteId) {
+      if ((await calculateNoteId()) === noteId) return;
+
+      const [cryptHash, textHash] = [noteId.slice(0, 10), noteId.slice(10, 20)];
 
       const req = await fetch(`${SERVER}/${cryptHash}`);
 
@@ -197,21 +207,24 @@
       update();
     }
 
-    async function updateHashAndSave(text) {
+    const savedIds = new Set();
+    let isSaved = true;
+    async function saveNote() {
       isSaved = false;
-      const textHash = await hash(text);
 
-      const key = await generateKey(textHash);
+      let memId = await calculateNoteId(hidden.value);
 
-      const textCrypt = await encrypt(text, key);
-
-      const cryptHash = await hash(textCrypt);
-
-      currId = `${cryptHash}${textHash}`;
-
-      let memId = currId;
+      if (savedIds.has(memId)) {
+        const url = new URL(window.location.href);
+        url.hash = memId;
+        window.history.replaceState(null, null, url);
+        isSaved = true;
+        return;
+      }
 
       await timeout(1000);
+
+      let currId = await calculateNoteId(hidden.value);
 
       if (memId !== currId) return;
 
@@ -219,13 +232,9 @@
       url.hash = currId;
       window.history.replaceState(null, null, url);
 
-      if (savedHashes.has(currId)) {
-        isSaved = true;
-        return;
-      }
-      savedHashes.add(currId);
+      savedIds.add(currId);
 
-      const req = await fetch(SERVER + '/', {
+      const req = await fetch(SERVER + "/", {
         method: "POST",
         body: textCrypt,
       });
@@ -239,15 +248,16 @@
       isSaved = true;
     }
 
-    let isInitial = true;
+    window.onbeforeunload = () => {
+      if (!isSaved) return "You have unsaved changes!";
+    };
 
     function update() {
       let text = hidden.value;
       localStorage.setItem("text", text);
 
       // Skip it on the first load since it's already saved
-      if (!isInitial) void updateHashAndSave(text);
-      isInitial = false;
+      void saveNote();
 
       // Turn urls into links
       const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -270,10 +280,6 @@
       main.innerHTML = text;
     }
 
-    window.onbeforeunload = () => {
-      if (!isSaved) return "You have unsaved changes!";
-    };
-
     hidden.onkeydown = (e) => {
       if (e.key === "Tab") {
         e.preventDefault();
@@ -283,8 +289,8 @@
     };
 
     onhashchange = () => {
-      console.log("asdk");
-      getNoteFromUrl();
+      console.log("From on hash change");
+      loadNote(getNoteId());
     };
 
     // main.addEventListener(
@@ -306,16 +312,11 @@
     // );
 
     hidden.value = "";
-    if (window.location.pathname === "") {
+    if (!getNoteId()) {
       hidden.value = localStorage.getItem("text") || "";
       update();
     } else {
-      getNoteFromUrl()
-        .then((note) => {})
-        .catch((e) => {
-          console.error(e);
-          window.location.hash = "";
-        });
+      loadNote(getNoteId());
     }
     hidden.addEventListener("input", update);
   </script>
