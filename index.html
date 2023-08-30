@@ -181,7 +181,7 @@
 
       const [cryptHash, textHash] = [noteid.slice(0, 10), noteid.slice(10, 20)];
 
-      const req = await fetch(`http://localhost:3000/${cryptHash}`);
+      const req = await fetch(`${SERVER}/${cryptHash}`);
 
       const body = await req.text();
 
@@ -225,7 +225,7 @@
       }
       savedHashes.add(currId);
 
-      const req = await fetch("http://localhost:3000", {
+      const req = await fetch(SERVER + '/', {
         method: "POST",
         body: textCrypt,
       });
