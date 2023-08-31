@@ -308,10 +308,7 @@
       }
     };
 
-    onhashchange = () => {
-      console.log("From on hash change");
-      loadNote(getNoteId());
-    };
+    onhashchange = () => loadNote(getNoteId());
 
     hidden.value = "";
     if (window.location.hash === "") {
