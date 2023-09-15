@@ -283,7 +283,7 @@
       );
 
       // Turn note ids to relative links
-      const noteIdRegex = /(?<=\s|^)(#[a-f0-9]{20})(?=\s|$)/gm;
+      const noteIdRegex = /(\s|^)(#[a-f0-9]{20})(?=\s|$)/gm;
       text = text.replace(
         noteIdRegex,
         (id) => '<a class="rel" href="' + id + '">' + id + "</a>"
