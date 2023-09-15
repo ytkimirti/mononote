@@ -279,25 +279,34 @@
 
       if (memId !== currId) return;
 
-      const req = await fetch(servers[0] + "/", {
-        method: "POST",
-        body: await encrypt(text, await generateKey(await hash(text))),
-      });
+      let isSuccess = false;
 
-      if (req.status < 200 || req.status >= 300)
-        return console.error(
-          `POST returned ${req.status}: ${await req.text()}`
-        );
+      async function req(server) {
+        const req = await fetch(servers[0] + "/", {
+          method: "POST",
+          body: await encrypt(text, await generateKey(await hash(text))),
+        });
 
-      currId = await calculateNoteId(hidden.value);
-      if (memId !== currId) return;
+        if (isSuccess) return;
 
-      const url = new URL(window.location.href);
-      url.hash = currId;
-      window.history.replaceState(null, null, url);
+        if (req.status < 200 || req.status >= 300)
+          return console.error(
+            `POST returned ${req.status}: ${await req.text()}`
+          );
 
-      savedIds.add(currId);
-      isSaved = true;
+        currId = await calculateNoteId(hidden.value);
+        if (memId !== currId) return;
+
+        const url = new URL(window.location.href);
+        url.hash = currId;
+        window.history.replaceState(null, null, url);
+
+        savedIds.add(currId);
+        isSaved = true;
+        isSuccess = true;
+      }
+
+      await Promise.all(servers.map((s) => req(s)));
     }
 
     window.onbeforeunload = () => {
@@ -314,22 +323,33 @@
 
       const [cryptHash, textHash] = [noteId.slice(0, 10), noteId.slice(10, 20)];
 
-      const req = await fetch(`${servers[0]}/${cryptHash}`);
+      let isSuccess = false;
 
-      const body = await req.text();
+      async function req(server) {
+        const req = await fetch(`${servers[0]}/${cryptHash}`);
 
-      if (req.status < 200 || req.status >= 300) {
-        hidden.value = "404";
+        if (isSuccess) return;
+
+        const body = await req.text();
+
+        if (isSuccess) return;
+
+        if (req.status < 200 || req.status >= 300) {
+          hidden.value = "404";
+          update();
+          return;
+        }
+
+        const key = await generateKey(textHash);
+
+        hidden.value = await decrypt(body, key);
+        savedIds.add(noteId);
+
+        isSuccess = true;
         update();
-        return;
       }
 
-      const key = await generateKey(textHash);
-
-      hidden.value = await decrypt(body, key);
-      savedIds.add(noteId);
-
-      update();
+      await Promise.all(servers.map((s) => req(s)));
     }
 
     function update() {
