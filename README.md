@@ -6,7 +6,7 @@ A note has a `noteid`, which is purely calculated from it's contents.
 Notes can reference other notes by their `noteid`'s.
 
 Example server implementation is 40 lines
-Client is a single html file ~300 lines
+Client is a single html file ~400 lines
 
 The protocol is designed so that users do not have to trust the server, only the client.
 Which servers to use can be changed from the client.
