@@ -1,8 +1,22 @@
+# Mononote
+
+A no trust note application that can't get any simpler.
+
+A note has a `noteid`, which is purely calculated from it's contents.
+Notes can reference other notes by their `noteid`'s.
+
+Example server implementation is 40 lines
+Client is a single html file ~300 lines
+
+The protocol is designed so that users do not have to trust the server, only the client.
+Which servers to use can be changed from the client.
+
 ## Hashing function
 
 Hash function is a SHA-1 function with the first 10 characters of it's lowercase hex output.
 
 **Example**
+
 ```
 hash("hello")   -> aaf4c61ddc
 hash("")        -> da39a3ee5e
