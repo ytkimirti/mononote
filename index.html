@@ -124,12 +124,12 @@
       );
     }
 
-    // Function to encrypt plaintext using AES-256 with a fixed IV
+    // Function to encrypt plaintext using AES-256 with a empty IV
     async function encrypt(plaintext, key) {
       const encoder = new TextEncoder();
       const data = encoder.encode(plaintext);
 
-      // Use a fixed IV (must be 12 bytes for AES-GCM)
+      // Use an empty IV (must be 12 bytes for AES-GCM)
       const iv = new Uint8Array(12);
 
       const ciphertextBuffer = await crypto.subtle.encrypt(
@@ -143,17 +143,15 @@
 
       return btoa(
         String.fromCharCode.apply(null, new Uint8Array(ciphertextBuffer))
-      ); // Base64 encode the result
+      );
     }
 
-    // Function to decrypt ciphertext using AES-256 with a fixed IV
     async function decrypt(ciphertext, key) {
       const decoder = new TextDecoder("utf-8");
       const ciphertextArray = new Uint8Array(
         Array.from(atob(ciphertext), (c) => c.charCodeAt(0))
       );
 
-      // Use a fixed IV (must be 12 bytes for AES-GCM)
       const iv = new Uint8Array(12);
       const data = ciphertextArray;
 
