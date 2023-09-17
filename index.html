@@ -286,7 +286,7 @@ https://omg.mahlutacorbasi.rocks:4242
       let isSuccess = false;
 
       async function req(server) {
-        const req = await fetch(servers[0] + "/", {
+        const req = await fetch(server + "/", {
           method: "POST",
           body: await encrypt(text, await generateKey(await hash(text))),
         });
