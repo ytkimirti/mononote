@@ -18,8 +18,8 @@ const server = http.createServer((req, res) => {
     res.writeHead(code, { "Access-Control-Allow-Origin": "*" });
     res.end(body);
   };
-
-  if (req.method === "POST") {
+  if (req.method === "OPTIONS") end(200);
+  else if (req.method === "POST") {
     let requestBody = "";
 
     req.on("data", (chunk) => {
