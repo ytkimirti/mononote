@@ -1,5 +1,7 @@
 # Mononote
 
+Live site: https://ytkimirti.github.io/mononote#bd568d179a6c87e85706
+
 A no trust note application that can't get any simpler.
 
 A note has a `noteid`, which is purely calculated from it's contents.
