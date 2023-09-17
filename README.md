@@ -1,6 +1,6 @@
-# Mononote
+# Mononote - [Website](https://ytkimirti.github.io/mononote#bd568d179a6c87e85706)
 
-Live site: https://ytkimirti.github.io/mononote#bd568d179a6c87e85706
+
 
 A no trust note application that can't get any simpler.
 
