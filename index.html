@@ -330,7 +330,7 @@ https://omg.mahlutacorbasi.rocks:4242
       let isSuccess = false;
 
       async function req(server) {
-        const req = await fetch(`${servers[0]}/${cryptHash}`);
+        const req = await fetch(`${server}/${cryptHash}`);
 
         if (isSuccess) return;
 
