@@ -228,7 +228,11 @@
       if (serversEl.value === "")
         serversEl.value =
           localStorage.getItem("servers") ||
-          "# Add your servers here one per line\n" + "http://localhost:3000";
+          `
+# Add your servers here one per line 
+# My simple self-hosted server:
+https://omg.mahlutacorbasi.rocks:4242
+`.trim();
 
       localStorage.setItem("servers", serversEl.value);
 
