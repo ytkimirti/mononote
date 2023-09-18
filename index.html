@@ -363,6 +363,12 @@ https://omg.mahlutacorbasi.rocks:4242
       // Skip it on the first load since it's already saved
       void saveNote();
 
+      // Sanitize html
+      text = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
       // Turn urls into links
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       text = text.replace(
